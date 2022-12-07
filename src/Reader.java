@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Reader {
@@ -9,7 +10,7 @@ public class Reader {
         String[] monomials = null;
         while(scanner.hasNextLine()){
             String data = scanner.nextLine();
-            monomials = data.split(" ");
+            monomials = data.split("\\+");
         }
         scanner.close();
         return monomials;

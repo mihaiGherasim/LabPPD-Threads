@@ -9,6 +9,24 @@ public class MyLinkedList{
         }
     }
 
+    public void removeNode(Node node){
+        Node currentNode = this.head;
+        if(node.data.grade == head.data.grade){
+            head.data = head.next.data;
+            head.next = head.next.next;
+        }
+        else {
+            while (currentNode != null) {
+                if (currentNode.next != null && currentNode.next.data.grade == node.data.grade) {
+                    Node nextNode = currentNode.next;
+                    currentNode.next = nextNode.next;
+                    currentNode.data = nextNode.data;
+                }
+                currentNode = currentNode.next;
+            }
+        }
+    }
+
     public void insert(Monomial monomial){
         Node newNode = new Node(monomial);
         if(this.head == null){
@@ -30,11 +48,17 @@ public class MyLinkedList{
                 }
                 else{
                     last.data.value+= monomial.value;
+                    if(last.data.value == 0){
+                        removeNode(head);
+                    }
                 }
             }
             else {
                 if (last.next.data.grade == monomial.grade) {
                     last.next.data.value += monomial.value;
+                    if(last.next.data.value == 0){
+                        removeNode(last.next);
+                    }
                 } else {
                     if(this.head == last){
                         if(last.data.grade < monomial.grade) {
@@ -50,6 +74,9 @@ public class MyLinkedList{
                         }
                         else{
                             last.data.value+= monomial.value;
+                            if(last.data.value == 0){
+                                removeNode(last);
+                            }
                         }
                     }
                     else {

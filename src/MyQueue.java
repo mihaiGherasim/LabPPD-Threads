@@ -21,7 +21,7 @@ public class MyQueue {
         count++;
     }
 
-    public String popFromQueue(){
+    public synchronized String popFromQueue(){
         if(isEmpty()){
             return null;
         }
