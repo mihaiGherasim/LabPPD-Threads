@@ -1,11 +1,14 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class MainClass {
 
     public static void main(String[] args) throws InterruptedException {
         int p = 4;
-        Thread[] threads = new Thread[p];
+        Thread[] threadsConsumers = new Thread[p];
+        Thread[] threadsProducers = new Thread[p];
         MyLinkedList linkedList = new MyLinkedList();
         MyQueue queue = new MyQueue(2000);
         Worker worker = new Worker(queue);
@@ -13,23 +16,42 @@ public class MainClass {
         File[] filesList = directoryPath.listFiles();
         int numberOfFiles = filesList.length;
         final int[] currentFile = {1};
-        Thread producer = new Thread(()->{
-            for(File file: filesList){
-                String[] polynomial;
-                try {
-                    polynomial = Reader.readFromFile(file);
-                    synchronized (queue) {
-                        worker.addMonomialsToQueue(polynomial, queue);
-                    }
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
-                synchronized (currentFile) {
-                    currentFile[0]++;
-                }
+        final ArrayList<ArrayList<File>> filesForThreads = new ArrayList<>();
+        int whole = numberOfFiles / (p-1);
+        int rest = numberOfFiles % (p-1);
+        int start = 0;
+        int end = whole;
+        for(int i = 0; i < p-1; i++){
+            if(rest > 0){
+                end++;
+                rest--;
             }
-        });
-        producer.start();
+            ArrayList<File> files = new ArrayList<>(Arrays.asList(filesList).subList(start, end));
+            filesForThreads.add(files);
+            start = end;
+            end = start + whole;
+        }
+        for(int  i = 0; i < p-1; i++){
+            final int finalI = i;
+            Thread producer = new Thread(()->{
+                for(File file: filesForThreads.get(finalI)){
+                    String[] polynomial;
+                    try {
+                        polynomial = Reader.readFromFile(file);
+                        synchronized (queue) {
+                            worker.addMonomialsToQueue(polynomial, queue);
+                        }
+                    } catch (FileNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                    synchronized (currentFile) {
+                        currentFile[0]++;
+                    }
+                }
+            });
+            threadsProducers[i] = producer;
+            producer.start();
+        }
 
         long startTime = System.nanoTime();
         for(int i=0; i<p-1; i++) {
@@ -59,13 +81,13 @@ public class MainClass {
                     }
                 }
             });
-            threads[i] = t;
+            threadsConsumers[i] = t;
             t.start();
         }
 
-        producer.join();
         for(int i=0; i<p-1; i++){
-            threads[i].join();
+            threadsConsumers[i].join();
+            threadsProducers[i].join();
         }
         long endTime = System.nanoTime();
         System.out.println((endTime-startTime)/1E6);

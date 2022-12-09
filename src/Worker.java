@@ -84,9 +84,7 @@ public class Worker implements Runnable{
                 grade = Integer.parseInt(valueGrade[1]);
             }
             Monomial newMonomial = new Monomial(value, grade);
-            synchronized (linkedList) {
-                linkedList.insert(newMonomial);
-            }
+            linkedList.insert(newMonomial);
         }
     }
 
