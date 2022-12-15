@@ -3,9 +3,11 @@ import java.util.LinkedList;
 public class Worker implements Runnable{
 
     MyQueue queue;
+    BlockingHelper blockingHelper;
 
-    public Worker(MyQueue queue){
+    public Worker(MyQueue queue, BlockingHelper blockingHelper){
         this.queue = queue;
+        this.blockingHelper = blockingHelper;
     }
     public static void addPolynomial(String[] polynomial, MyLinkedList linkedList){
         for(String monomial:polynomial){
@@ -55,6 +57,11 @@ public class Worker implements Runnable{
         }
     }
 
+    public void addMonomialToQueue(String monomial, MyQueue queue) {
+        queue.pushToQueue(monomial);
+        queue.notifyAll();
+    }
+
     public static void addMonomial(String monomial, MyLinkedList linkedList) {
         if (!monomial.equals("")) {
             int value = 0;
@@ -91,5 +98,14 @@ public class Worker implements Runnable{
     @Override
     public void run() {
 
+    }
+
+
+    public String popFromQueue() {
+        synchronized (blockingHelper) {
+            String monomial = queue.popFromQueue();
+            blockingHelper.notifyAll();
+            return monomial;
+        }
     }
 }

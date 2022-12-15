@@ -10,8 +10,9 @@ public class MainClass {
         Thread[] threadsConsumers = new Thread[p];
         Thread[] threadsProducers = new Thread[p];
         MyLinkedList linkedList = new MyLinkedList();
+        BlockingHelper blockingHelper = new BlockingHelper();
         MyQueue queue = new MyQueue(2000);
-        Worker worker = new Worker(queue);
+        Worker worker = new Worker(queue, blockingHelper);
         File directoryPath = new File("polynomials1");
         File[] filesList = directoryPath.listFiles();
         int numberOfFiles = filesList.length;
@@ -38,10 +39,17 @@ public class MainClass {
                     String[] polynomial;
                     try {
                         polynomial = Reader.readFromFile(file);
-                        synchronized (queue) {
-                            worker.addMonomialsToQueue(polynomial, queue);
+                        synchronized (blockingHelper) {
+                            synchronized (queue) {
+                                for (String monomial : polynomial) {
+                                    if (queue.isFull()) {
+                                        blockingHelper.wait();
+                                    }
+                                    worker.addMonomialToQueue(monomial, queue);
+                                }
+                            }
                         }
-                    } catch (FileNotFoundException e) {
+                    } catch (FileNotFoundException | InterruptedException e) {
                         throw new RuntimeException(e);
                     }
                     synchronized (currentFile) {
@@ -73,9 +81,10 @@ public class MainClass {
                     while (!queue.isEmpty()) {
                         String monomial = "";
                         synchronized (currentFile) {
-                                if (!queue.isEmpty() && currentFile[0] <= filesList.length+1) {
-                                    monomial = queue.popFromQueue();
-                                }
+                            if (!queue.isEmpty() && currentFile[0] <= filesList.length+1) {
+                                //monomial = queue.popFromQueue();
+                                monomial = worker.popFromQueue();
+                            }
                         }
                         Worker.addMonomial(monomial, linkedList);
                     }
